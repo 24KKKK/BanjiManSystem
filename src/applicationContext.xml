@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+			http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+			http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+			http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+	<!-- 加载数据库配置文件 -->
+	<context:property-placeholder location="classpath:jdbc.properties" />
+	<!-- 获取连接池 -->		
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close" p:driverClassName="${jdbc.driverClassName}"
+		p:url="${jdbc.url}" p:username="${jdbc.username}" p:password="${jdbc.password}">
+		<!--maxActive: 最大连接数量 -->
+		<property name="maxActive" value="150" />
+		<!--minIdle: 最小空闲连接 -->
+		<property name="minIdle" value="5" />
+		<!--maxIdle: 最大空闲连接 -->
+		<property name="maxIdle" value="20" />
+		<!--initialSize: 初始化连接 -->
+		<property name="initialSize" value="30" />
+		<!-- 连接被泄露时是否打印 -->
+		<!-- <property name="logAbandoned" value="true" /> -->
+		<!--removeAbandoned: 是否自动回收超时连接 -->
+		<!-- <property name="removeAbandoned" value="true" /> -->
+		<!--removeAbandonedTimeout: 超时时间(以秒数为单位) -->
+	    <!--<property name="removeAbandonedTimeout" value="10" /> -->
+		<!--maxWait: 超时等待时间以毫秒为单位 1000等于60秒 -->
+		<property name="maxWait" value="1000" />
+		<!-- 在空闲连接回收器线程运行期间休眠的时间值,以毫秒为单位. -->
+		<property name="timeBetweenEvictionRunsMillis" value="10000" />
+		<!-- 在每次空闲连接回收器线程(如果有)运行时检查的连接数量 -->
+		<property name="numTestsPerEvictionRun" value="10" />
+		<!-- 1000 * 60 * 30 连接在池中保持空闲而不被空闲连接回收器线程 -->
+		<property name="minEvictableIdleTimeMillis" value="10000" />
+		<property name="validationQuery" value="SELECT NOW() FROM DUAL" />
+	</bean>
+	
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource">
+			<ref bean="dataSource" />
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">
+					org.hibernate.dialect.MySQLDialect
+				</prop>
+				<!--显示生sql语句  -->
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hbm2ddl.auto">create</prop>
+			</props>
+		</property>
+		<property name="mappingLocations"
+			value="classpath*:com/dyf/model/*.hbm.xml" />
+	</bean>
+    <!-- 1.事务管理器 -->
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager"
+		p:sessionFactory-ref="sessionFactory" />
+	<!-- 2.切入点 -->
+	<aop:config>
+		<aop:advisor
+			pointcut="execution(* com.dyf.service.I*Service.*(..))"
+			advice-ref="txAdvice" />
+	</aop:config>
+	<!-- 3.事务属性 -->
+	<!-- transaction-manager="transactionManager"可以不用配置，默认值 -->
+	<tx:advice id="txAdvice">
+		<tx:attributes>
+			<!-- 如果不需要事务service层方法名必须以：get和find开头 -->
+			<tx:method name="get*" read-only="true" propagation="SUPPORTS" />
+			<tx:method name="find*" read-only="true" propagation="SUPPORTS" />
+			<tx:method name="*" />
+		</tx:attributes>
+	</tx:advice>
+	<!-- DAO层的注入 -->
+	<bean id="baseDao" class="com.dyf.dao.BaseDAO">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>	
+	<!--Service层的注入  -->
+	
+	<bean id="baseService" abstract="true">
+		<property name="baseDao" ref="baseDao" />
+	</bean>
+	 <!--用户登录service层  -->
+	<bean id="userService" class="com.dyf.service.impl.UserServiceImpl"
+		parent="baseService">
+	</bean>
+	<!--学生service层  -->
+	<bean id="studentService" class="com.dyf.service.impl.StudentServiceImpl"
+		parent="baseService">
+	</bean>
+	 <!--班级service层  -->
+	<bean id="banJiService" class="com.dyf.service.impl.BanJiServiceImpl"
+		parent="baseService">
+	</bean>
+	 <!--课程service层  -->
+	<bean id="keChengService" class="com.dyf.service.impl.KeChengServiceImpl"
+		parent="baseService">
+	</bean>
+	 <!--成绩service层  -->
+	<bean id="chengJiService" class="com.dyf.service.impl.ChengJiServiceImpl"
+		parent="baseService">
+	</bean>
+	<!--Action层的注入  -->
+	
+	 <!-- loginAction -->
+	<bean id="loginAction" class="com.dyf.action.LoginAction"
+		scope="prototype">
+		<property name="userService" ref="userService" />
+	</bean>
+	 <!-- mainAction -->
+	<bean id="mainAction" class="com.dyf.action.MainAction"
+		scope="prototype">
+	</bean>
+	 <!--studentAction  -->
+	<bean id="studentAction" class="com.dyf.action.StudentAction"
+		scope="prototype">
+		<property name="studentService" ref="studentService" />
+		<property name="banJiService" ref="banJiService" />
+	</bean>
+	 <!--banJiAction  -->
+	<bean id="banJiAction" class="com.dyf.action.BanJiAction"
+		scope="prototype">
+		<property name="banJiService" ref="banJiService" />
+	</bean>
+	<!--keChengAction  -->
+	<bean id="keChengAction" class="com.dyf.action.KeChengAction"
+		scope="prototype">
+		<property name="keChengService" ref="keChengService" />
+	</bean>
+	<!--chengJiAction  -->
+	<bean id="chengJiAction" class="com.dyf.action.ChengJiAction"
+		scope="prototype">
+		<property name="chengJiService" ref="chengJiService" />
+		<property name="studentService" ref="studentService" />
+		<property name="keChengService" ref="keChengService" />
+	</bean>
+	<!--scoreAction  -->
+	<bean id="scoreAction" class="com.dyf.action.ScoreAction"
+		scope="prototype">
+		<property name="chengJiService" ref="chengJiService" />
+		<property name="keChengService" ref="keChengService" />
+	</bean>
+	
+	<!--tongJiAction  -->
+	<bean id="tongJiAction" class="com.dyf.action.TongJiAction"
+		scope="prototype">
+	</bean>
+	<!--helpAction  -->
+	<bean id="helpAction" class="com.dyf.action.HelpAction"
+		scope="prototype">
+	</bean>
+</beans>

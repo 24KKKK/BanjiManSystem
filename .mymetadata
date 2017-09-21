@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-module
+  type="WEB"
+  name="BanjiManSystem"
+  id="myeclipse.1493688805471"
+  context-root="/"
+  j2ee-spec="6.0"
+  archive="BanjiManSystem.war">
+  <attributes>
+    <attribute name="webrootdir" value="WebRoot" />
+  </attributes>
+</project-module>
+

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 2.1//EN" "http://struts.apache.org/dtds/struts-2.1.dtd">
+<struts>
+<!-- 把Struts的action交给spring托管 -->
+    <constant name="struts.objectFactory" value="spring"/>
+    <constant name="struts.devMode" value="true"/>
+    <constant name="struts.il8n.encoding" value="UTF-8"></constant>
+    <!--设置上传文件大小 （20MB）-->
+    <constant name="struts.multipart.maxSize" value="2097152"></constant>
+    <!--    定位视图资源的根路径 -->
+     <constant name="struts.convention.result.path" value="/WEB-INF/"></constant>
+    <!--设置struts配置文件修改以后系统是否自动重新加载该文件默认为false但是在开发环境下还是要设置成true-->
+    <constant name="struts.configuration.xml.reload" value="true"></constant>
+     <package name="default" namespace="/" extends="struts-default">
+       <interceptors>
+			<!-- 定义登录权限拦截器 -->
+			<interceptor name="authInterceptor"
+				class="com.dyf.action.interceptor.AuthInterceptor">
+				<!-- 通过配置参数传递不需要拦截的Action给AuthInterceptor -->
+				<!-- AuthInterceptor获取配置参数使用类似于spring的set注入的方法 ：setExcludeActions(String) -->
+				<param name="excludeActions">LoginAction,RegisterAction</param>
+			</interceptor>
+			<!-- 定义拦截器栈 -->
+			<interceptor-stack name="myStack">
+				<!-- 必须先引用登录权限拦截器 -->
+				<interceptor-ref name="authInterceptor" />
+				<!-- 在引入二次参数拦截器 -->
+				<interceptor-ref name="paramsPrepareParamsStack" />
+			</interceptor-stack>
+		</interceptors>
+		<!-- 修改默认的拦截器栈 -->
+		<default-interceptor-ref name="myStack" />
+		<!-- 全局返回视图 -->
+		<global-results>
+			<result name="login">/WEB-INF/Z-views/login.jsp</result>
+			<result name="main" type="redirectAction">main</result>
+		</global-results>
+		<!-- 登录 -->
+		<action name="login_*" class="loginAction" method="{1}"/>
+		
+        <!-- 登录进入框架主页 -->
+		<action name="main_*" class="mainAction" method="{1}">
+			<result>/WEB-INF/Z-views/menu.jsp</result>
+		</action>
+        <!-- 学生信息管理 -->
+        <action name="student_*" class="studentAction" method="{1}">
+			<result name="list">/WEB-INF/Z-views/student/student.jsp</result>
+			<result name="input">/WEB-INF/Z-views/student/student_input.jsp</result>
+		    <result name="false">/WEB-INF/Z-views/student/error.jsp</result>
+			<result name="update">/WEB-INF/Z-views/student/student_update.jsp</result>
+			<result name="reload" type="redirectAction">
+			  <param name="actionName">student_Studentlist</param>
+			  <param name="baseQuery.currentPage">${baseQuery.currentPage}</param>
+			  <param name="baseQuery.pageSize">${baseQuery.pageSize}</param>
+			  <param name="baseQuery.sname">${baseQuery.sname}</param>
+			</result>
+		</action>
+		<!-- 班级信息管理 -->
+        <action name="banji_*" class="banJiAction" method="{1}">
+		   <result name="list">/WEB-INF/Z-views/banji/banji.jsp</result>
+		   <result name="input">/WEB-INF/Z-views/banji/banji_input.jsp</result>
+		   <result name="false">/WEB-INF/Z-views/banji/error.jsp</result>
+		   <result name="update">/WEB-INF/Z-views/banji/banji_update.jsp</result>
+		   <result name="reload" type="redirectAction">
+		     <param name="actionName">banji_Banlist</param>
+		     <param name="baseQuery.currentPage">${baseQuery.currentPage}</param>
+		     <param name="baseQuery.pageSize">${baseQuery.pageSize}</param>
+		     <param name="baseQuery.bname">${baseQuery.bname}</param>
+		   </result>
+		</action>
+		<!-- 课程信息管理 -->
+        <action name="kecheng_*" class="keChengAction" method="{1}">
+			<result name="list">/WEB-INF/Z-views/kecheng/kecheng.jsp</result>
+			<result name="input">/WEB-INF/Z-views/kecheng/kecheng_input.jsp</result>
+		    <result name="false">/WEB-INF/Z-views/kecheng/error.jsp</result>
+		    <result name="update">/WEB-INF/Z-views/kecheng/kecheng_update.jsp</result>
+		    <result name="reload" type="redirectAction">
+		     <param name="actionName">kecheng_KeChenglist</param>
+		     <param name="baseQuery.currentPage">${baseQuery.currentPage}</param>
+		     <param name="baseQuery.pageSize">${baseQuery.pageSize}</param>
+		     <param name="baseQuery.kname">${baseQuery.kname}</param>
+		    </result>
+		</action>
+		<!-- 成绩录入-->
+        <action name="chengji_*" class="chengJiAction" method="{1}">
+			<result name="ChengJilist">/WEB-INF/Z-views/chengji/chengji.jsp</result>
+			<!-- <result name="input">/WEB-INF/Z-views/chengji/chengji.jsp</result>
+		    <result name="false">/WEB-INF/Z-views/chengji/error.jsp</result>
+		    <result name="update">/WEB-INF/Z-views/chengji/chengji_update.jsp</result> -->
+		    <result name="reload" type="redirectAction">
+		     <param name="actionName">chengji_ChengJilist</param>
+		     <param name="baseQuery.currentPage">${baseQuery.currentPage}</param>
+		     <param name="baseQuery.pageSize">${baseQuery.pageSize}</param>
+		     <param name="baseQuery.kid">${baseQuery.kid}</param>
+		     <param name="baseQuery.sid">${baseQuery.sid}</param>
+		    </result>
+		</action>
+		<!-- 成绩录入-->
+		<action name="score_*" class="scoreAction" method="{1}">
+		   <result name="list">/WEB-INF/Z-views/score/chengji.jsp</result>
+		   <result name="reload" type="redirectAction">
+		     <param name="actionName">score_ChengJilist</param>
+		     <param name="baseQuery.currentPage">${baseQuery.currentPage}</param>
+		     <param name="baseQuery.pageSize">${baseQuery.pageSize}</param>
+		     <param name="baseQuery.kid">${baseQuery.kid}</param>
+		     <param name="baseQuery.sid">${baseQuery.sid}</param>
+		    </result>
+		</action>
+		<!-- 统计查询-->
+        <action name="tongji_*" class="studentAction" method="{1}">
+			<result>/WEB-INF/Z-views/tongji/tongji.jsp</result>
+		</action>
+		<!-- 放置最后：全部通配符，搞定其他所有的crud的action -->
+		<action name="*_*" class="{1}Action" method="{2}">
+			<result>/WEB-INF/Z-views/{1}/{1}.jsp</result>
+			<result name="input">/WEB-INF/Z-views/{1}/{1}_input.jsp</result>
+			<result name="reload" type="redirectAction">{1}</result>
+		</action>
+	</package>
+</struts>
